@@ -1,0 +1,18 @@
+[[pages]]
+path = "streamlit_app.py"
+name = "Home"
+icon = "🏠"
+
+[[pages]]
+path = "pages/1_Robby-Chat-file.py"
+name = "Robby-Chat-file"
+icon = "📄"
+
+[[pages]]
+path = "pages/2_Robby-Chat-web.py"
+name = "Robby-Chat-web"
+icon = "🌐"
+
+[[pages]]
+path = "pages/download.py"
+name = "download"
