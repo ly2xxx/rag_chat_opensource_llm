@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain.chat_models import ChatOllama
-# from langchain.chains import ConversationalRetrievalChain
-from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
+# from langchain.chains import RetrievalQA
 from langchain.prompts.prompt import PromptTemplate
 import time
 # from langchain.callbacks import get_openai_callback
@@ -45,33 +45,36 @@ class Chatbot:
 
         retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":3})
 
-        # chain = ConversationalRetrievalChain.from_llm(llm=llm,
-        #     retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
+        chain = ConversationalRetrievalChain.from_llm(llm=llm,
+            retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
         
-        # chain_input = {"question": query, "chat_history": st.session_state["history"]}
-        # result = chain(chain_input)
-        # st.session_state["history"].append((query, result["answer"]))
-        
-        # return result["answer"]
+        chain_input = {"question": query, "chat_history": st.session_state["history"]}
+        result = chain(chain_input)
+        st.session_state["history"].append((query, result["answer"]))
 
-        #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
-        qa_chain = RetrievalQA.from_chain_type(
-            llm,
-            retriever=retriever,
-            chain_type="map_reduce",
-            return_source_documents=True
-            # chain_type_kwargs={"prompt": self.QA_PROMPT}
-        )
-
-        result = qa_chain({"query": query})
-
-        st.session_state["history"].append((query, result["result"]))
-        st.session_state["history"].append((query, result["source_documents"][0]))
-        
         end_time = time.time()
         execution_time = end_time - start_time
+        
+        return result["answer"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
-        return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
+        #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
+        # qa_chain = RetrievalQA.from_chain_type(
+        #     llm,
+        #     retriever=retriever,
+        #     chain_type="map_reduce",
+        #     return_source_documents=True
+        #     # chain_type_kwargs={"prompt": self.QA_PROMPT}
+        # )
+
+        # result = qa_chain({"query": query})
+
+        # st.session_state["history"].append((query, result["result"]))
+        # st.session_state["history"].append((query, result["source_documents"][0]))
+        
+        # end_time = time.time()
+        # execution_time = end_time - start_time
+
+        # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
         llm = ChatOllama(model=self.model_name, temperature=self.temperature)
