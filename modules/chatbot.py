@@ -41,7 +41,7 @@ class Chatbot:
         """
         llm = self.initializeLLM()
 
-        retriever = self.vectors.as_retriever()
+        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":2})
 
         # chain = ConversationalRetrievalChain.from_llm(llm=llm,
         #     retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
@@ -56,16 +56,17 @@ class Chatbot:
         qa_chain = RetrievalQA.from_chain_type(
             llm,
             retriever=retriever,
-            chain_type="refine"
-            # return_source_documents=True,
+            chain_type="map_rerank",
+            return_source_documents=True
             # chain_type_kwargs={"prompt": self.QA_PROMPT}
         )
 
         result = qa_chain({"query": query})
 
         st.session_state["history"].append((query, result["result"]))
+        st.session_state["history"].append((query, result["source_documents"][0]))
         
-        return result["result"]
+        return result["result"]+"\n------\n"+result["source_documents"][0]
 
     def initializeLLM(self):
         llm = ChatOllama(model=self.model_name, temperature=self.temperature)
