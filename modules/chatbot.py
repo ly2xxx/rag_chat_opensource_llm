@@ -3,6 +3,7 @@ from langchain.chat_models import ChatOllama
 # from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import RetrievalQA
 from langchain.prompts.prompt import PromptTemplate
+import time
 # from langchain.callbacks import get_openai_callback
 # from ctransformers import AutoModelForCausalLM
 # from transformers import AutoTokenizer, BitsAndBytesConfig
@@ -36,12 +37,13 @@ class Chatbot:
     QA_PROMPT = PromptTemplate(template=qa_template, input_variables=["context","question" ])
 
     def conversational_chat(self, query):
+        start_time = time.time()
         """
         Start a conversational chat with a model via Langchain
         """
         llm = self.initializeLLM()
 
-        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":2})
+        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":3})
 
         # chain = ConversationalRetrievalChain.from_llm(llm=llm,
         #     retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
@@ -56,7 +58,7 @@ class Chatbot:
         qa_chain = RetrievalQA.from_chain_type(
             llm,
             retriever=retriever,
-            chain_type="map_rerank",
+            chain_type="map_reduce",
             return_source_documents=True
             # chain_type_kwargs={"prompt": self.QA_PROMPT}
         )
@@ -66,7 +68,10 @@ class Chatbot:
         st.session_state["history"].append((query, result["result"]))
         st.session_state["history"].append((query, result["source_documents"][0]))
         
-        return result["result"]+"\n------\n"+result["source_documents"][0]
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
         llm = ChatOllama(model=self.model_name, temperature=self.temperature)
