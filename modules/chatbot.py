@@ -55,7 +55,13 @@ class Chatbot:
         end_time = time.time()
         execution_time = end_time - start_time
         
-        return result["answer"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
+        return (
+            result["answer"]
+            + "\n---------------------------------------\n"
+            + f"Query time: {execution_time:.4f} seconds"
+            + "\n---------------------------------------\n"
+            # + "\n".join(map(str, result['source_documents']))
+        )
 
         #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
         # qa_chain = RetrievalQA.from_chain_type(
