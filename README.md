@@ -32,6 +32,14 @@ Install the required dependencies in the virtual environment :
 
 `pip install -r requirements.txt`
 
+Setup gpt-2 tokenizer manually for langchain ConversationalRetrievalChain :
+Copy 
+`models\models--gpt2`
+to
+`C:\Users\[windows-username]\.cache\huggingface\hub\models--gpt2`
+
+`pip install -r requirements.txt`
+
 Launch the chat service locally :
 
 `streamlit run streamlit_app.py`
