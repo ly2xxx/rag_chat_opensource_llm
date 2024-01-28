@@ -94,7 +94,8 @@ class Embedder:
             vectors = self.generateEmbeddingsFromFile(file, file_extension)
 
         # Save the vectors to a pickle file
-        with open(f"{self.PATH}/{original_filename}.pkl", "wb") as f:
+        embedder_model = st.session_state["model"]
+        with open(f"{self.PATH}/{embedder_model}-{original_filename}.pkl", "wb") as f:
             pickle.dump(vectors, f)
 
     def generateEmbeddingsFromFile(self, file, file_extension):
@@ -146,7 +147,8 @@ class Embedder:
         """
         Retrieves document embeddings
         """
-        vector_file_name = f"{self.PATH}/{original_filename}.pkl"
+        embedder_model = st.session_state["model"]
+        vector_file_name = f"{self.PATH}/{embedder_model}-{original_filename}.pkl"
 
         if not os.path.isfile(vector_file_name):
             self.storeDocEmbeds(file, original_filename)

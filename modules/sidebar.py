@@ -3,7 +3,7 @@ import base64
 
 class Sidebar:
 
-    MODEL_OPTIONS = ["mistral"]
+    MODEL_OPTIONS = ["starling-lm","mistral"]
     TEMPERATURE_MIN_VALUE = 0.0
     TEMPERATURE_MAX_VALUE = 1.0
     TEMPERATURE_DEFAULT_VALUE = 0.0
