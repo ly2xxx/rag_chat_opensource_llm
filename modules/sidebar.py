@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import os
 
 class Sidebar:
 
@@ -8,6 +9,10 @@ class Sidebar:
     TEMPERATURE_MAX_VALUE = 1.0
     TEMPERATURE_DEFAULT_VALUE = 0.0
     TEMPERATURE_STEP = 0.01
+
+    #override defaults with .env settings
+    if os.path.exists(".env") and os.environ.get("LLM_MODEL") is not None:
+        MODEL_OPTIONS = os.environ.get("LLM_MODEL").strip().split(",")
 
     @staticmethod
     def about():
