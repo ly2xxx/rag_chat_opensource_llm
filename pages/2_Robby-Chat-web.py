@@ -28,9 +28,12 @@ def generate_filename(url):
     # current_datetime = datetime.now().strftime("%d%m%Y.%H.%M.%S")
 
     # Extract the last part of the URL as the filename
-    path_segments = urlparse(url).path.split('/')
-    last_part = path_segments[-1] if path_segments[-1] else path_segments[-2]  # Use the last non-empty segment
-    
+    try:
+        path_segments = urlparse(url).path.split('/')
+        last_part = path_segments[-1] if path_segments[-1] else path_segments[-2]  # Use the last non-empty segment
+    except Exception as e:
+        last_part = ""
+
     # Generate an MD5 hash for long filenames
     if len(last_part) > 30:
         hash_object = hashlib.md5(last_part.encode())
@@ -40,7 +43,7 @@ def generate_filename(url):
     current_date = datetime.now().strftime("%d%m%Y")
     
     # Concatenate the parts to create the filename
-    filename = f"{domain}.{last_part}.{current_date}"
+    filename = f"{domain}-{last_part}-{current_date}"
     
     return filename
 
