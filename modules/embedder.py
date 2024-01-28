@@ -20,6 +20,7 @@ class Embedder:
 
     def __init__(self):
         self.PATH = "embeddings"
+        self.MODEL = "mistral"
         self.createEmbeddingsDir()
 
     def createEmbeddingsDir(self):
@@ -94,7 +95,7 @@ class Embedder:
             vectors = self.generateEmbeddingsFromFile(file, file_extension)
 
         # Save the vectors to a pickle file
-        with open(f"{self.PATH}/{original_filename}.pkl", "wb") as f:
+        with open(f"{self.PATH}/{self.MODEL}-{original_filename}.pkl", "wb") as f:
             pickle.dump(vectors, f)
 
     def generateEmbeddingsFromFile(self, file, file_extension):
@@ -138,7 +139,8 @@ class Embedder:
         # modelPath = "all-MiniLM-L6-v2"
         # embeddings = HuggingFaceEmbeddings(model_name=modelPath)
         # Use embedding function to store them in vector db
-        embeddings = OllamaEmbeddings(model=st.session_state["model"])
+        self.MODEL = st.session_state["model"]
+        embeddings = OllamaEmbeddings(model=self.MODEL)
         return embeddings
 
 
@@ -146,7 +148,7 @@ class Embedder:
         """
         Retrieves document embeddings
         """
-        vector_file_name = f"{self.PATH}/{original_filename}.pkl"
+        vector_file_name = f"{self.PATH}/{self.MODEL}-{original_filename}.pkl"
 
         if not os.path.isfile(vector_file_name):
             self.storeDocEmbeds(file, original_filename)
