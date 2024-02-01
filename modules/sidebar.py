@@ -1,6 +1,7 @@
 import streamlit as st
 import base64
 import os
+import dotenv
 
 class Sidebar:
 
@@ -10,9 +11,12 @@ class Sidebar:
     TEMPERATURE_DEFAULT_VALUE = 0.0
     TEMPERATURE_STEP = 0.01
 
+    #load environment variables from .env file
+    dotenv.load_dotenv()
+
     #override defaults with .env settings
     if os.path.exists(".env") and os.environ.get("LLM_MODEL") is not None:
-        MODEL_OPTIONS = os.environ.get("LLM_MODEL").strip().split(",")
+        MODEL_OPTIONS = os.getenv("LLM_MODEL").strip().split(",")
 
     @staticmethod
     def about():
