@@ -15,12 +15,14 @@ Follow these steps to set up and run the service locally :
 
 ### Installation
 Clone the repository :
-`git clone https://github.com/ly2xxx/rag_chat_opensource_llm`
-
+```bash
+git clone https://github.com/ly2xxx/rag_chat_opensource_llm
+```
 
 Navigate to the project directory :
-`cd rag_chat_opensource_llm`
-
+```bash
+cd rag_chat_opensource_llm
+```
 
 Create a virtual environment :
 ```bash
@@ -29,8 +31,9 @@ python -m venv .venv
 ```
 
 Install the required dependencies in the virtual environment :
-
-`pip install -r requirements.txt`
+```bash
+pip install -r requirements.txt
+```
 
 Setup gpt-2 tokenizer manually for langchain ConversationalRetrievalChain :
 Copy 
@@ -38,10 +41,8 @@ Copy
 to
 `C:\Users\[windows-username]\.cache\huggingface\hub\models--gpt2`
 
-`pip install -r requirements.txt`
-
 Launch the chat service locally :
-
-`streamlit run streamlit_app.py`
-
+```bash
+streamlit run streamlit_app.py
+```
 #### That's it! The AI chatbot is now up and running locally. 🤗
