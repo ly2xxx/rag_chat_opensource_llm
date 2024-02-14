@@ -47,3 +47,6 @@ Launch the chat service locally :
 streamlit run streamlit_app.py
 ```
 #### That's it! The AI chatbot is now up and running locally. 🤗
+
+
+![website demo screenshot](Gallery/menu/Mistral-GPU-Chat-web-2024-01-28-12_57_37.png?raw=true "website demo")
