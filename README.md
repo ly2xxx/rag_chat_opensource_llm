@@ -11,7 +11,7 @@ Follow these steps to set up and run the service locally :
 ### Prerequisites
 - Python 3.9 or higher
 - Git
-- Ollama setup "ollama run mistral" 
+- Ollama setup "ollama run mistral" (see https://dev.to/0xkoji/how-to-run-large-language-models-locally-on-a-windows-machine-using-wsl-and-ollama-55fd)
 
 ### Installation
 Clone the repository :
