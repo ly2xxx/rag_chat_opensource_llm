@@ -40,6 +40,7 @@ Copy
 `models\models--gpt2`
 to
 `C:\Users\[windows-username]\.cache\huggingface\hub\models--gpt2`
+![gpt2 manual copy screenshot](Gallery/menu/gpt-2-setup.png?raw=true "gpt2 setup")
 
 Launch the chat service locally :
 ```bash
