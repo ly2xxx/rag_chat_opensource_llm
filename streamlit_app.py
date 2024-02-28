@@ -33,6 +33,7 @@ show_pages(
     [
         Page("./streamlit_app.py", "Home", "🏠"),
         # Can use :<icon-name>: or the actual icon
+        Page("./pages/0_Keywords-Research-beta.py", "Keywords-research", "💻"),
         Page("./pages/1_Robby-Chat-file.py", "Chat-file", "📄"),
         Page("./pages/2_Robby-Chat-web.py", "Chat-web", "🌐"),
         Page("./pages/download.py", "download", "⤓"),

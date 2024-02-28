@@ -4,6 +4,11 @@ name = "Home"
 icon = "🏠"
 
 [[pages]]
+path = "pages/0_Keywords-Research-beta.py"
+name = "Keywords-research"
+icon = "💻"
+
+[[pages]]
 path = "pages/1_Robby-Chat-file.py"
 name = "Robby-Chat-file"
 icon = "📄"

@@ -117,6 +117,38 @@ class Utilities:
             except Exception as e:
                 print(f"Error loading web page: {e}")
                 return url
+            
+    @staticmethod
+    def handle_webloads(urls):
+        """
+        Handles and displays content from a list of web pages
+        :param urls: List of URLs to load
+        :return: Text content of the web pages
+        """
+        try:
+            responses = []
+
+            for url in urls:
+                # Send a GET request to the URL
+                response = requests.get(url)
+                responses.append(response)
+
+            # Use BeautifulSoup to parse the HTML content
+            soups = [BeautifulSoup(response.text, 'html.parser') for response in responses]
+
+            # Extract text content from the HTML
+            text_content = [soup.get_text(separator='\n', strip=True) for soup in soups]
+
+            # Output the text content
+            file_container = st.expander("Your web pages:")
+            for i, content in enumerate(text_content):
+                file_container.write(f"{i+1}.{urls[i]}. {content}")
+
+            return '\n'.join(text_content)
+
+        except Exception as e:
+            print(f"Error loading web pages: {e}")
+            return urls
 
     @staticmethod
     def setup_chatbot(uploaded_file, model, temperature):
