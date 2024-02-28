@@ -44,11 +44,14 @@ hide_pages(["download"])
 #Contact
 with st.sidebar.expander("📬 Contact"):
 
-#     st.write("**GitHub:**",
-# "[ly2xxx/rag_chat_poc-tbc](https://github.com/ly2xxx/rag_chat_poc)")
+    st.write("**GitHub:**",
+    "[Open-Source LLM solution](https://github.com/ly2xxx/rag_chat_opensource_llm/)")
 
-    st.write("**Mail** : yang.li@barclays.com, rad.ricka@barclays.com")
-    st.write("**Created by Yang, hosted by Rad**")
+    st.write("**Blog:** "
+    "[@ly2xxx](https://edisonideas.wordpress.com/)")
+
+    st.write("**Mail** : ly2xxx@hotmail.com")
+    # st.write("**Created by Yang, hosted by Rad**")
 
 
 #Title
