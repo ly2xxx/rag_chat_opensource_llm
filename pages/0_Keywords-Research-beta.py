@@ -157,8 +157,7 @@ if len(query.strip())>0:
         st.write("No results found. Please try a different search query.")
 
     if st.button("Submit for chatbot research") or st.session_state["keysearch_ready"]:
-        web_context = utils.handle_webloads(st.session_state["keyword_selections"])
-
+        web_context = utils.handle_webloads(st.session_state["keyword_selections"], query_str.replace("+","-"))
         if web_context:
 
             # Configure the sidebar

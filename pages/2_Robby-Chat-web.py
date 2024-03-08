@@ -69,7 +69,8 @@ if True:
 
     web_url = st.text_input(placeholder="Enter Website URL", label_visibility="hidden", label =" ", on_change=input_callback)
     if len(web_url) > 0:
-        web_context = utils.handle_webload(web_url)
+        filename_from_url = generate_filename(web_url)
+        web_context = utils.handle_webload(web_url, filename_from_url)
 
         if web_context:
 
@@ -86,7 +87,7 @@ if True:
                 if web_context.endswith('.pkl'):
                     uploaded_file.name = web_context[:-4]
                 else:
-                    uploaded_file.name = generate_filename(web_url)+str(len(web_context))+".txt"
+                    uploaded_file.name = filename_from_url+str(len(web_context))+".txt"
 
                 chatbot = utils.setup_chatbot(
                     uploaded_file, st.session_state["model"], st.session_state["temperature"]
