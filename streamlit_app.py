@@ -36,6 +36,7 @@ show_pages(
         Page("./pages/0_Keywords-Research-beta.py", "Keywords-research", "💻"),
         Page("./pages/1_Robby-Chat-file.py", "Chat-file", "📄"),
         Page("./pages/2_Robby-Chat-web.py", "Chat-web", "🌐"),
+        Page("./pages/3_Text-Similarity-beta.py", "Text-Similarity-score", "📚"),
         Page("./pages/download.py", "download", "⤓"),
     ]
 )
@@ -127,6 +128,7 @@ st.write("""
 - **Keywords-Research(beta)**: Search with Bing and chat about selected web pages [ConversationalRetrievalChain](https://python.langchain.com/en/latest/modules/chains/index_examples/chat_vector_db.html)
 - **Chat-file**: General Chat on data (PDF, TXT,CSV) with a [vectorstore](https://github.com/facebookresearch/faiss) (index useful parts(max 4) for respond to the user) | works with [ConversationalRetrievalChain](https://python.langchain.com/en/latest/modules/chains/index_examples/chat_vector_db.html)
 - **Chat-web**: General Chat about given website with [langchain-Sitemaploader](https://python.langchain.com/docs/integrations/document_loaders/sitemap) stored in a [vectorstore](https://github.com/facebookresearch/faiss) (index useful parts(max 4) for respond to the user) | works with [ConversationalRetrievalChain](https://python.langchain.com/en/latest/modules/chains/index_examples/chat_vector_db.html)
+- **Text-Similarity-score(beta)**: Use [Sentence Transformers](https://dev.to/miguelsmuller/comparing-text-similarity-measurement-methods-sentence-transformers-vs-fuzzy-og3) with [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) embeddings, to calculate text(s) similarity score
 """)
 
 st.markdown("---")

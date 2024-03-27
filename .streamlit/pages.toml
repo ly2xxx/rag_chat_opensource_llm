@@ -19,5 +19,10 @@ name = "Robby-Chat-web"
 icon = "🌐"
 
 [[pages]]
+path = "pages/3_Text-Similarity-beta.py"
+name = "Text-Similarity-score"
+icon = "📚"
+
+[[pages]]
 path = "pages/download.py"
 name = "download"
