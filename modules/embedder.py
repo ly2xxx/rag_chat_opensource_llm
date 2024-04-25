@@ -20,7 +20,7 @@ class Embedder:
 
     def __init__(self):
         self.PATH = "embeddings"
-        self.MODEL = "mistral"
+        self.MODEL = st.session_state["model"]
         self.createEmbeddingsDir()
 
     def createEmbeddingsDir(self):
