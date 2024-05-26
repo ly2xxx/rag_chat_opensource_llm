@@ -93,14 +93,16 @@ class Utilities:
             file_extension = get_file_extension(uploaded_file.name)
 
             # Show the contents of the file based on its extension
+            txt = None
             if file_extension == ".csv" :
                txt = show_csv_file(uploaded_file)
             if file_extension== ".pdf" : 
                 txt = show_pdf_file(uploaded_file)
-            elif file_extension== ".txt" : 
+            if file_extension== ".txt" : 
                 txt = show_txt_file(uploaded_file)
 
-            Utilities.downloadRawContent(file_name, txt)
+            if txt and len(txt)>0:            
+                Utilities.downloadRawContent(file_name, txt)
 
         else:
             st.session_state["reset_chat"] = True
