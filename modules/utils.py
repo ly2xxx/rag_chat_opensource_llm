@@ -217,7 +217,7 @@ class Utilities:
     @staticmethod
     def setup_conversation_cockpit(layout, sidebar, history, uploaded_file, chatbot):
         st.session_state["chatbot"] = chatbot
-        sidebar.download_model(st.session_state["vectordb"])
+        # sidebar.download_model(st.session_state["vectordb"])
 
         if st.session_state["ready"]:
             # Create containers for chat responses and user prompts

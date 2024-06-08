@@ -116,6 +116,7 @@ celerybeat.pid
 .venvgpu
 .venv11
 .venv
+.env
 env/
 venv/
 ENV/

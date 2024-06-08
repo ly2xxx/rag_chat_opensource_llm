@@ -1,7 +1,9 @@
 import streamlit as st
-from langchain.chat_models import ChatOllama
-from langchain.chains import ConversationalRetrievalChain
-# from langchain.chains import RetrievalQA
+# from langchain.chat_models import ChatOllama
+from langchain_community.llms import Bedrock
+from langchain.vectorstores import FAISS
+# from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import RetrievalQA
 from langchain.prompts.prompt import PromptTemplate
 import time
 # from langchain.callbacks import get_openai_callback
@@ -10,9 +12,11 @@ import time
 # from langchain.llms import HuggingFacePipeline
 # import torch
 # import transformers
-
+from modules.CustomRetriever import CustomRetriever
+# from langchain.vectorstores import TensorStoreRetriever
 #fix Error: module 'langchain' has no attribute 'verbose'
 import langchain
+
 langchain.verbose = False
 
 class Chatbot:
@@ -21,6 +25,8 @@ class Chatbot:
         self.model_name = model_name
         self.temperature = temperature
         self.vectors = vectors
+        # # Create a FAISS vector store instance from the list of vectors
+        # self.vector_store = FAISS.from_vectors(self.vectors)
 
     qa_template = """
         You are a helpful AI assistant named Robby. The user gives you a file its content is represented by the following pieces of context, use them to answer the question at the end.
@@ -43,47 +49,52 @@ class Chatbot:
         """
         llm = self.initializeLLM()
 
-        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":3})
+        # Call the as_retriever method on the vector store instance
+        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+        # retriever = CustomRetriever(self.vectors)
+        # retriever = TensorStoreRetriever(self.vectors)
 
-        chain = ConversationalRetrievalChain.from_llm(llm=llm,
-            retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
+        # chain = ConversationalRetrievalChain.from_llm(llm=llm,
+        #     retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
         
-        chain_input = {"question": query, "chat_history": st.session_state["history"]}
-        result = chain(chain_input)
-        st.session_state["history"].append((query, result["answer"]))
+        # chain_input = {"question": query, "chat_history": st.session_state["history"]}
+        # result = chain(chain_input)
+        # st.session_state["history"].append((query, result["answer"]))
 
-        end_time = time.time()
-        execution_time = end_time - start_time
-        
-        return (
-            result["answer"]
-            + "\n---------------------------------------\n"
-            + f"Query time: {execution_time:.4f} seconds"
-            + "\n---------------------------------------\n"
-            # + "\n".join(map(str, result['source_documents']))
-        )
-
-        #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
-        # qa_chain = RetrievalQA.from_chain_type(
-        #     llm,
-        #     retriever=retriever,
-        #     chain_type="map_reduce",
-        #     return_source_documents=True
-        #     # chain_type_kwargs={"prompt": self.QA_PROMPT}
-        # )
-
-        # result = qa_chain({"query": query})
-
-        # st.session_state["history"].append((query, result["result"]))
-        # st.session_state["history"].append((query, result["source_documents"][0]))
-        
         # end_time = time.time()
         # execution_time = end_time - start_time
+        
+        # return (
+        #     result["answer"]
+        #     + "\n---------------------------------------\n"
+        #     + f"Query time: {execution_time:.4f} seconds"
+        #     + "\n---------------------------------------\n"
+        #     # + "\n".join(map(str, result['source_documents']))
+        # )
 
-        # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
+        #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
+        qa_chain = RetrievalQA.from_chain_type(
+            llm,
+            retriever=retriever,
+            chain_type="map_reduce",
+            return_source_documents=True
+            # chain_type_kwargs={"prompt": self.QA_PROMPT}
+        )
+
+        # result = qa_chain({"query": query})
+        result = qa_chain.invoke(query)
+
+        st.session_state["history"].append((query, result["result"]))
+        st.session_state["history"].append((query, result["source_documents"][0]))
+        
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
-        llm = ChatOllama(model=self.model_name, temperature=self.temperature)
+        # llm = ChatOllama(model=self.model_name, temperature=self.temperature)
+        llm = Bedrock(model_id=self.model_name)
    
         # model = AutoModelForCausalLM.from_pretrained(
         #     "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",

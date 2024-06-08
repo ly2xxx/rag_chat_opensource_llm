@@ -8,7 +8,9 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.embeddings import OllamaEmbeddings
+# from langchain.embeddings import OllamaEmbeddings
+import boto3
+from langchain_community.embeddings import BedrockEmbeddings
 # from InstructorEmbedding import INSTRUCTOR
 # from langchain.embeddings import HuggingFaceInstructEmbeddings
 import zipfile
@@ -94,9 +96,11 @@ class Embedder:
         else:
             vectors = self.generateEmbeddingsFromFile(file, file_extension)
 
+        return vectors
+
         # Save the vectors to a pickle file
-        with open(f"{self.PATH}/{self.MODEL}-{original_filename}.pkl", "wb") as f:
-            pickle.dump(vectors, f)
+        # with open(f"{self.PATH}/{self.MODEL}-{original_filename}.pkl", "wb") as f:
+        #     pickle.dump(vectors, f)
 
     def generateEmbeddingsFromFile(self, file, file_extension):
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
@@ -129,8 +133,10 @@ class Embedder:
         os.remove(tmp_file_path)
                 
         embeddings = self.initializeEmbeddings()
-
+        # texts = [doc.page_content for doc in data]
         vectors = FAISS.from_documents(data, embeddings)
+        # 
+        # vectors = embeddings.embed_documents(texts)
         # Error: 'Document' object has no attribute 'replace'
         # vectors = FAISS.from_texts(data, embeddings)
         return vectors
@@ -139,8 +145,11 @@ class Embedder:
         # modelPath = "all-MiniLM-L6-v2"
         # embeddings = HuggingFaceEmbeddings(model_name=modelPath)
         # Use embedding function to store them in vector db
-        self.MODEL = st.session_state["model"]
-        embeddings = OllamaEmbeddings(model=self.MODEL)
+        # self.MODEL = st.session_state["model"]
+        # embeddings = OllamaEmbeddings(model=self.MODEL)
+        BEDROCK_MODEL = "amazon.titan-embed-text-v1"
+        client = boto3.client(service_name="bedrock-runtime")
+        embeddings = BedrockEmbeddings(model_id=BEDROCK_MODEL, client=client)
         return embeddings
 
 
@@ -151,11 +160,11 @@ class Embedder:
         vector_file_name = f"{self.PATH}/{self.MODEL}-{original_filename}.pkl"
 
         if not os.path.isfile(vector_file_name):
-            self.storeDocEmbeds(file, original_filename)
+            vectors = self.storeDocEmbeds(file, original_filename)
 
         # Load the vectors from the pickle file
-        with open(vector_file_name, "rb") as f:
-            vectors = pickle.load(f)
-            st.session_state["vectordb"]=vector_file_name
+        # with open(vector_file_name, "rb") as f:
+        #     vectors = pickle.load(f)
+        st.session_state["vectordb"]=vector_file_name
         
         return vectors
