@@ -13,7 +13,7 @@
                  "run",
                  "streamlit_app.py",
                  "--server.port",
-                 "8505"
+                 "8515"
             ]
             // "program": "${file}",
             // "console": "integratedTerminal",

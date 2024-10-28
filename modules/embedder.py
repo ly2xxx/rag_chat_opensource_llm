@@ -140,7 +140,8 @@ class Embedder:
         # embeddings = HuggingFaceEmbeddings(model_name=modelPath)
         # Use embedding function to store them in vector db
         self.MODEL = st.session_state["model"]
-        embeddings = OllamaEmbeddings(model=self.MODEL)
+        # embeddings = OllamaEmbeddings(model=self.MODEL)
+        embeddings = OllamaEmbeddings(model=self.MODEL, base_url="http://localhost:11434")
         return embeddings
 
 
