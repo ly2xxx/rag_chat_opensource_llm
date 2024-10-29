@@ -84,7 +84,7 @@ class Chatbot:
         # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
-        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434" temperature=self.temperature)
+        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434", temperature=self.temperature)
         # llm = ChatOpenAI(model=self.model_name, base_url="http://localhost:11434/v1", temperature=self.temperature)
         # model = AutoModelForCausalLM.from_pretrained(
         #     "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",
