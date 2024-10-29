@@ -8,7 +8,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 # from InstructorEmbedding import INSTRUCTOR
 # from langchain.embeddings import HuggingFaceInstructEmbeddings
 import zipfile
