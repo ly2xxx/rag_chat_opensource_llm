@@ -8,7 +8,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 # from InstructorEmbedding import INSTRUCTOR
 # from langchain.embeddings import HuggingFaceInstructEmbeddings
 import zipfile
@@ -20,7 +20,7 @@ class Embedder:
 
     def __init__(self):
         self.PATH = "embeddings"
-        self.MODEL = "mistral"
+        self.MODEL = st.session_state["model"]
         self.createEmbeddingsDir()
 
     def createEmbeddingsDir(self):
@@ -140,7 +140,8 @@ class Embedder:
         # embeddings = HuggingFaceEmbeddings(model_name=modelPath)
         # Use embedding function to store them in vector db
         self.MODEL = st.session_state["model"]
-        embeddings = OllamaEmbeddings(model=self.MODEL)
+        # embeddings = OllamaEmbeddings(model=self.MODEL)
+        embeddings = OllamaEmbeddings(model=self.MODEL, base_url="http://localhost:11434")
         return embeddings
 
 

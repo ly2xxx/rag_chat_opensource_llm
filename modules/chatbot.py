@@ -1,5 +1,6 @@
 import streamlit as st
-from langchain.chat_models import ChatOllama
+from langchain_community.chat_models import ChatOllama
+# from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 # from langchain.chains import RetrievalQA
 from langchain.prompts.prompt import PromptTemplate
@@ -83,8 +84,8 @@ class Chatbot:
         # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
-        llm = ChatOllama(model=self.model_name, temperature=self.temperature)
-   
+        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434", temperature=self.temperature)
+        # llm = ChatOpenAI(model=self.model_name, base_url="http://localhost:11434/v1", temperature=self.temperature)
         # model = AutoModelForCausalLM.from_pretrained(
         #     "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",
         #     model_file="mistral-7b-instruct-v0.1.Q4_K_M.gguf",

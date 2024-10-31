@@ -50,3 +50,6 @@ streamlit run streamlit_app.py
 
 
 ![website demo screenshot](Gallery/menu/Mistral-GPU-Chat-web-2024-01-28-12_57_37.png?raw=true "website demo")
+
+### Other resources
+auto-upgrade imports - https://python.langchain.com/v0.2/docs/versions/v0_2/
