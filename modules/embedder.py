@@ -2,6 +2,7 @@ import os
 import pickle
 import tempfile
 from langchain.document_loaders.csv_loader import CSVLoader
+from langchain.document_loaders import DataFrameLoader
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.document_loaders import PyPDFLoader
@@ -15,6 +16,10 @@ import zipfile
 import io
 import streamlit as st
 # from sentence_transformers import SentenceTransformer
+import pandas as pd
+from openpyxl import load_workbook
+from io import StringIO
+from langchain.schema import Document
 
 class Embedder:
 
@@ -126,7 +131,34 @@ class Embedder:
             loader = TextLoader(file_path=tmp_file_path, encoding="utf-8")
             data = loader.load_and_split(text_splitter)
 
-        os.remove(tmp_file_path)
+        elif file_extension == ".xlsx":
+            # Get all sheet names
+            excel_file = pd.ExcelFile(tmp_file_path)
+            # all_sheets_data = []
+            documents = []
+            
+            # Read each sheet
+            for sheet_name in excel_file.sheet_names:
+                df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                df = df.astype(str)
+                sheet_text = f"Sheet: {sheet_name}\n{df.to_string()}"
+                # Create Document object directly
+                doc = Document(page_content=sheet_text, metadata={"source": sheet_name})
+                documents.append(doc)
+
+            data = documents
+            #     all_sheets_data.append(sheet_text)
+            
+            # # Combine all sheets' data
+            # combined_text = "\n\n".join(all_sheets_data)
+            
+            # # Create documents from the combined text
+            # # loader = TextLoader(StringIO(combined_text))
+            # text_file = StringIO(combined_text)
+            # loader = TextLoader(text_file)
+            # data = loader.load()
+            
+        # os.remove(tmp_file_path)
                 
         embeddings = self.initializeEmbeddings()
 
