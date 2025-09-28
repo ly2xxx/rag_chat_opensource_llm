@@ -1,31 +1,21 @@
 # Dependabot configuration for Python dependency management
-# This file enables automated dependency updates for security and version updates
-# More info: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
-  # Python package manager (pip)
   - package-ecosystem: "pip"
-    # Directory where requirements files are located
     directory: "/"
-    # Branch to update dependencies on
     target-branch: "main"
-    # Schedule for dependency updates
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
       timezone: "Europe/London"
-    # Limit number of open pull requests
     open-pull-requests-limit: 5
-    # Auto-merge settings for security updates
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    # Group updates by dependency type
     groups:
       python-security:
-        dependency-type: "development"
+        dependency-type: "security"
         update-types:
           - "patch"
           - "minor"
@@ -34,14 +24,8 @@ updates:
         update-types:
           - "patch"
           - "minor"
-    # Commit message settings
     commit-message:
       prefix: "deps"
       include: "scope"
-    # Pull request settings
     reviewers:
       - "ly2xxx"
-    # Ignore specific dependencies if needed (uncomment as needed)
-    # ignore:
-    #   - dependency-name: "package-name"
-    #     versions: [">=1.0.0"]
