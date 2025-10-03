@@ -15,12 +15,13 @@ updates:
       - dependency-type: "indirect"
     groups:
       python-security:
-        dependency-type: "security"
+        applies-to: security-updates
         update-types:
           - "patch"
           - "minor"
       python-production:
-        dependency-type: "production"
+        patterns:
+          - "*"
         update-types:
           - "patch"
           - "minor"
