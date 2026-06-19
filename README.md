@@ -11,7 +11,7 @@ Follow these steps to set up and run the service locally :
 ### Prerequisites
 - Python 3.9 or higher
 - Git
-- Ollama setup "ollama run mistral" (see https://dev.to/0xkoji/how-to-run-large-language-models-locally-on-a-windows-machine-using-wsl-and-ollama-55fd)
+- Ollama setup "ollama run deepseek-v4-pro:cloud" (see https://dev.to/0xkoji/how-to-run-large-language-models-locally-on-a-windows-machine-using-wsl-and-ollama-55fd)
 
 ### Installation
 Clone the repository :
@@ -24,15 +24,14 @@ Navigate to the project directory :
 cd rag_chat_opensource_llm
 ```
 
-Create a virtual environment :
+Install dependencies and create a virtual environment using uv :
 ```bash
-python -m venv .venv
-.\.venv\Scripts\activate
+uv sync
 ```
 
-Install the required dependencies in the virtual environment :
+Activate the virtual environment :
 ```bash
-pip install -r requirements.txt
+.\.venv\Scripts\activate
 ```
 
 Setup gpt-2 tokenizer manually for langchain ConversationalRetrievalChain :
@@ -50,3 +49,6 @@ streamlit run streamlit_app.py
 
 
 ![website demo screenshot](Gallery/menu/Mistral-GPU-Chat-web-2024-01-28-12_57_37.png?raw=true "website demo")
+
+### Other resources
+auto-upgrade imports - https://python.langchain.com/v0.2/docs/versions/v0_2/

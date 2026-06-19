@@ -27,13 +27,13 @@ Sidebar = sidebar_module.Sidebar
 # Instantiate the main components
 layout, sidebar, utils = Layout(), Sidebar(), Utilities()
 
-layout.show_header("PDF, TXT, CSV")
+layout.show_header("PDF, TXT, CSV, XLSX")
 
 user_api_key = utils.load_api_key()
 
 if True:
 
-    uploaded_file = utils.handle_upload(["pdf", "txt", "csv", "zip"])
+    uploaded_file = utils.handle_upload(["pdf", "txt", "csv", "xlsx", "zip"])
 
     if uploaded_file:
 

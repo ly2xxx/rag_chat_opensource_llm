@@ -37,58 +37,108 @@ class Utilities:
         #             st.session_state.api_key = user_api_key
 
         return user_api_key
-
+    
+    @staticmethod
+    def downloadRawContent(file_name, txt):
+          try:
+              txt_data=txt.encode()
+              st.download_button(
+                      label="Download RAW content",
+                      data=txt_data,
+                      file_name=file_name + ".txt",
+                      mime="text/plain"
+              )
+          except Exception as e:
+              print(f"Warning - not able to offer the download RAW content: {e}")
     
     @staticmethod
     def handle_upload(file_types):
-        """
-        Handles and display uploaded_file
-        :param file_types: List of accepted file types, e.g., ["csv", "pdf", "txt"]
-        """
-        uploaded_file = st.sidebar.file_uploader("upload", type=file_types, label_visibility="collapsed")
-        if uploaded_file is not None:
+          """
+          Handles and display uploaded_file
+          :param file_types: List of accepted file types, e.g., ["csv", "pdf", "txt"]
+          """
+          uploaded_file = st.sidebar.file_uploader("upload", type=file_types, label_visibility="collapsed")
+          if uploaded_file is not None:
 
-            def show_csv_file(uploaded_file):
-                file_container = st.expander("Your CSV file :")
-                uploaded_file.seek(0)
-                shows = pd.read_csv(uploaded_file)
-                file_container.write(shows)
+              def show_csv_file(uploaded_file):
+                  file_container = st.expander("Your CSV file :")
+                  uploaded_file.seek(0)
+                  shows = pd.read_csv(uploaded_file)
+                  file_container.write(shows)
+                  return shows
 
-            def show_pdf_file(uploaded_file):
-                file_container = st.expander("Your PDF file :")
-                with pdfplumber.open(uploaded_file) as pdf:
-                    pdf_text = ""
-                    for page in pdf.pages:
-                        pdf_text += page.extract_text() + "\n\n"
-                file_container.write(pdf_text)
+              def show_pdf_file(uploaded_file):
+                  file_container = st.expander("Your PDF file :")
+                  with pdfplumber.open(uploaded_file) as pdf:
+                      pdf_text = ""
+                      for page in pdf.pages:
+                          pdf_text += page.extract_text() + "\n\n"
+                  file_container.write(pdf_text)
+                  return pdf_text
             
-            def show_txt_file(uploaded_file):
-                file_container = st.expander("Your TXT file:")
-                uploaded_file.seek(0)
-                content = uploaded_file.read().decode("utf-8")
-                file_container.write(content)
+              def show_txt_file(uploaded_file):
+                  file_container = st.expander("Your TXT file:")
+                  uploaded_file.seek(0)
+                  content = uploaded_file.read().decode("utf-8")
+                  file_container.write(content)
+                  return content
+
+              def show_excel_file(uploaded_file):
+                  file_container = st.expander("Your Excel file :")
+                  uploaded_file.seek(0)
+                  df = pd.read_excel(uploaded_file)
+                  # Convert all columns to string type for consistent display
+                  df = df.astype(str)
+                  file_container.write(df)
+                  return df.to_string()
             
-            def get_file_extension(uploaded_file):
-                return os.path.splitext(uploaded_file)[1].lower()
+              def get_file_extension(uploaded_file):
+                  return os.path.splitext(uploaded_file)[1].lower()
             
-            file_extension = get_file_extension(uploaded_file.name)
+              def get_file_name(uploaded_file):
+                  return os.path.splitext(uploaded_file)[0].lower()
+            
+              file_name = get_file_name(uploaded_file.name)
+              file_extension = get_file_extension(uploaded_file.name)
 
-            # Show the contents of the file based on its extension
-            #if file_extension == ".csv" :
-            #    show_csv_file(uploaded_file)
-            if file_extension== ".pdf" : 
-                show_pdf_file(uploaded_file)
-            elif file_extension== ".txt" : 
-                show_txt_file(uploaded_file)
+              # Show the contents of the file based on its extension
+              txt = None
+              if file_extension == ".csv" :
+               txt = show_csv_file(uploaded_file)
+              if file_extension== ".pdf" : 
+                  txt = show_pdf_file(uploaded_file)
+              if file_extension== ".txt" : 
+                  txt = show_txt_file(uploaded_file)
+              if file_extension == ".xlsx":
+                  txt = show_excel_file(uploaded_file)
 
-        else:
-            st.session_state["reset_chat"] = True
+            #   if txt and len(txt)>0:            
+            #       if txt is not None and (isinstance(txt, str) or not txt.empty):
+            #           Utilities.downloadRawContent(file_name, txt)
+          else:
+              st.session_state["reset_chat"] = True
 
-        #print(uploaded_file)
-        return uploaded_file
+          #print(uploaded_file)
+          return uploaded_file
     
     @staticmethod
-    def handle_webload(url):
+    def remove_unwanted_tags(soup):
+        # Remove unwanted tags and attributes
+        unwanted_tags = ['script', 'style', 'header', 'footer', 'nav', 'figure', 'figcaption']
+        for tag in unwanted_tags:
+            for element in soup(tag):
+                element.decompose()
+
+        return soup
+    
+    @staticmethod
+    def clean_web_content(html_content):
+        # Remove special characters and keep only alphanumeric, spaces, and certain punctuation
+        clean_text = re.sub(r'[^A-Za-z0-9 \n\.\,\!\?\:\;\-\/\'\=\’]+', '', str(html_content))
+        return clean_text
+
+    @staticmethod
+    def handle_webload(url, filename="raw"):
             """
             Handles and displays content from a web page
             :param url: URL of the web page to load
@@ -100,10 +150,10 @@ class Utilities:
                 response.raise_for_status()  # Raise an exception for bad responses
 
                 # Use BeautifulSoup to parse the HTML content
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = Utilities.remove_unwanted_tags(BeautifulSoup(response.text, 'html.parser'))
 
                 # Extract text content from the HTML
-                text_content = soup.get_text(separator='\n', strip=True)
+                text_content = Utilities.clean_web_content(soup.get_text(separator='\n', strip=True))
 
                 # Output the text content
                 # print(text_content)
@@ -111,12 +161,50 @@ class Utilities:
                 # uploaded_file.seek(0)
                 # content = uploaded_file.read().decode("utf-8")
                 file_container.write(text_content)
-
+                Utilities.downloadRawContent(filename, text_content)
                 return text_content
 
             except Exception as e:
                 print(f"Error loading web page: {e}")
                 return url
+            
+    @staticmethod
+    def handle_webloads(urls, filename="raw"):
+        """
+        Handles and displays content from a list of web pages
+        :param urls: List of URLs to load
+        :return: Text content of the web pages
+        """
+        try:
+            responses = []
+
+            for url in urls:
+                # Send a GET request to the URL
+                response = requests.get(url)
+                responses.append(response)
+
+            # Use BeautifulSoup to parse the HTML content
+            soups = [Utilities.remove_unwanted_tags(BeautifulSoup(response.text, 'html.parser')) for response in responses]
+
+            # Extract text content from the HTML
+            text_content = [Utilities.clean_web_content(soup.get_text(separator='\n', strip=True)) for soup in soups]
+
+            # Output the text content
+            text = ""
+            file_container = st.expander("Your web pages:")
+            for i, content in enumerate(text_content):
+                section = f"{i+1}.{urls[i]}. {content}"
+                file_container.write(section)
+                text += '\n\n\n'+section
+
+            # Download the contents of the file_container as a file
+            Utilities.downloadRawContent(filename, text)
+
+            return '\n'.join(text_content)
+
+        except Exception as e:
+            print(f"Error loading web pages: {e}")
+            return urls
 
     @staticmethod
     def setup_chatbot(uploaded_file, model, temperature):

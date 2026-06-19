@@ -1,5 +1,6 @@
 import streamlit as st
-from langchain.chat_models import ChatOllama
+from langchain_community.chat_models import ChatOllama
+# from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 # from langchain.chains import RetrievalQA
 from langchain.prompts.prompt import PromptTemplate
@@ -22,10 +23,22 @@ class Chatbot:
         self.temperature = temperature
         self.vectors = vectors
 
+    # qa_template = """
+    #     You are a helpful AI assistant named Robby. The user gives you a file its content is represented by the following pieces of context, use them to answer the question at the end.
+    #     If you don't know the answer, just say you don't know. Do NOT try to make up an answer.
+    #     If the question is not related to the context, politely respond that you are tuned to only answer questions that are related to the context.
+    #     Use as much detail as possible when responding.
+
+    #     context: {context}
+    #     =========
+    #     question: {question}
+    #     ======
+    #     """
+    
     qa_template = """
         You are a helpful AI assistant named Robby. The user gives you a file its content is represented by the following pieces of context, use them to answer the question at the end.
         If you don't know the answer, just say you don't know. Do NOT try to make up an answer.
-        If the question is not related to the context, politely respond that you are tuned to only answer questions that are related to the context.
+        If the question is not related to the context, search in your own knowledge base. But if you do find the answer in your own knowledge base, politely tell the user the provided context is not relevant and you have found the answer from somewhere else. And be as specific about the source of the answer as possible.
         Use as much detail as possible when responding.
 
         context: {context}
@@ -83,8 +96,8 @@ class Chatbot:
         # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
 
     def initializeLLM(self):
-        llm = ChatOllama(model=self.model_name, temperature=self.temperature)
-   
+        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434", temperature=self.temperature)
+        # llm = ChatOpenAI(model=self.model_name, base_url="http://localhost:11434/v1", temperature=self.temperature)
         # model = AutoModelForCausalLM.from_pretrained(
         #     "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",
         #     model_file="mistral-7b-instruct-v0.1.Q4_K_M.gguf",
