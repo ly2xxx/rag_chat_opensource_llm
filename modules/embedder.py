@@ -100,7 +100,8 @@ class Embedder:
             vectors = self.generateEmbeddingsFromFile(file, file_extension)
 
         # Save the vectors to a pickle file
-        with open(f"{self.PATH}/{self.MODEL}-{original_filename}.pkl", "wb") as f:
+        safe_model = self.MODEL.replace(':', '_')
+        with open(f"{self.PATH}/{safe_model}-{original_filename}.pkl", "wb") as f:
             pickle.dump(vectors, f)
 
     def generateEmbeddingsFromFile(self, file, file_extension):
@@ -173,7 +174,7 @@ class Embedder:
         # Use embedding function to store them in vector db
         self.MODEL = st.session_state["model"]
         # embeddings = OllamaEmbeddings(model=self.MODEL)
-        embeddings = OllamaEmbeddings(model=self.MODEL, base_url="http://localhost:11434")
+        embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://localhost:11434")
         return embeddings
 
 
@@ -181,7 +182,8 @@ class Embedder:
         """
         Retrieves document embeddings
         """
-        vector_file_name = f"{self.PATH}/{self.MODEL}-{original_filename}.pkl"
+        safe_model = self.MODEL.replace(':', '_')
+        vector_file_name = f"{self.PATH}/{safe_model}-{original_filename}.pkl"
 
         if not os.path.isfile(vector_file_name):
             self.storeDocEmbeds(file, original_filename)
