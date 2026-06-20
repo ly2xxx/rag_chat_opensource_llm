@@ -9,18 +9,9 @@ from modules.layout import Layout
 from modules.utils import Utilities
 from modules.sidebar import Sidebar
 from datetime import datetime
-from st_pages import hide_pages
 import re
 
 CONST_CHECKBOX_COLUMN = 'Select'
-
-#To be able to update the changes made to modules in localhost (press r)
-def reload_module(module_name):
-    import importlib
-    import sys
-    if module_name in sys.modules:
-        importlib.reload(sys.modules[module_name])
-    return sys.modules[module_name]
 
 def generate_filename(query_keywords, web_context):
     domain = query_keywords.replace(" ", "_").replace("+","_")
@@ -117,28 +108,10 @@ def bing_search(query):
 
     return result_df, query_string
 
-hide_pages(["download"])
-history_module = reload_module('modules.history')
-layout_module = reload_module('modules.layout')
-utils_module = reload_module('modules.utils')
-sidebar_module = reload_module('modules.sidebar')
-
-ChatHistory = history_module.ChatHistory
-Layout = layout_module.Layout
-Utilities = utils_module.Utilities
-Sidebar = sidebar_module.Sidebar
-
 # Instantiate the main components
 layout, sidebar, utils = Layout(), Sidebar(), Utilities()
 
-# layout.show_header("Keywords")
-
-user_api_key = utils.load_api_key()
-
-# if not user_api_key:
-#     layout.show_api_key_missing()
-# else:
-#     os.environ["OPENAI_API_KEY"] = user_api_key
+st.session_state.setdefault("keysearch_ready", False)
 
 query = st.text_input('(use "+" to connect keywords, to resolve UnboundLocalError copy the search string from Bing url):', placeholder="Enter Search keyword(s), for example: movie+review", help='Enter the search keywords and hit Enter/Return', on_change=input_callback)
 query = query.replace(" ", "+") #replacing the spaces in query result with +

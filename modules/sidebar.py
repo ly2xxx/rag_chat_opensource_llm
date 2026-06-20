@@ -1,6 +1,7 @@
 import streamlit as st
-import base64
 import os
+import shutil
+import tempfile
 import dotenv
 
 class Sidebar:
@@ -58,31 +59,29 @@ class Sidebar:
             st.session_state.setdefault("temperature", self.TEMPERATURE_DEFAULT_VALUE)
 
     def download_model(self, vectormodel):
-        with open(vectormodel, 'rb') as f:
-            bytes = f.read()
-            b64 = base64.b64encode(bytes).decode()
-            href = f'<a href="data:file/pkl;base64,{b64}" download=\'{vectormodel}\'>\
-                Download Trained Model .pkl\
-            </a> <span style="color:green; font-weight:bold;">(Combine multiple .pkl files into a .zip for deeper AI analysis later)</span>'
-            st.markdown(href, unsafe_allow_html=True)
+        # vectormodel is the folder holding the FAISS index; offer it as a zip.
+        if not vectormodel or not os.path.isdir(vectormodel):
+            return
+        archive_base = os.path.join(tempfile.gettempdir(), os.path.basename(vectormodel))
+        zip_path = shutil.make_archive(archive_base, 'zip', vectormodel)
+        with open(zip_path, 'rb') as f:
+            st.download_button(
+                label="Download Trained Model (.zip)",
+                data=f.read(),
+                file_name=f"{os.path.basename(vectormodel)}.zip",
+                mime="application/zip",
+                help="Combine multiple index .zip files into one .zip for deeper AI analysis later",
+            )
 
-    def download_conversation(self, chathistory, chat_filename):
-        # Convert the list to a string
-        chat_text = "\n".join(map(str, chathistory))
-
-        # Convert the string to bytes
-        bytes_content = chat_text.encode()
-
-        # Clean the filename by removing or replacing disallowed characters
-        # clean_filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', str(chathistory))
-
-        # Create a base64-encoded link for downloading
-        b64 = base64.b64encode(bytes_content).decode()
-        href = f'<a href="data:file/txt;base64,{b64}" download=\'{chat_filename}.txt\'>\
-            Download Chat History .txt\
-        </a> <span style="color:green; font-weight:bold;">(Combine multiple .txt files into a .zip for deeper AI analysis later)</span>'
-
-        # Display the download link
-        st.markdown(href, unsafe_allow_html=True)
-
-    
+    def download_conversation(self, messages, chat_filename):
+        # Build a readable transcript from the messages list of dicts
+        chat_text = "\n".join(
+            f"{m['role']}: {m['content']}" for m in messages
+        )
+        st.download_button(
+            label="Download Chat History (.txt)",
+            data=chat_text.encode(),
+            file_name=f"{chat_filename}.txt",
+            mime="text/plain",
+            help="Combine multiple .txt files into a .zip for deeper AI analysis later",
+        )

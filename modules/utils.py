@@ -2,9 +2,7 @@ import os
 import pandas as pd
 import streamlit as st
 import pdfplumber
-from io import StringIO
 import re
-import sys
 from modules.chatbot import Chatbot
 from modules.embedder import Embedder
 import requests
@@ -230,46 +228,42 @@ class Utilities:
         st.session_state["chatbot"] = chatbot
         sidebar.download_model(st.session_state["vectordb"])
 
-        if st.session_state["ready"]:
-            # Create containers for chat responses and user prompts
-            response_container, prompt_container = st.container(), st.container()
+        if not st.session_state.get("ready"):
+            return None
 
-            with prompt_container:
-                # Display the prompt form
-                is_ready, user_input = layout.prompt_form()
+        # Initialize / reset the chat history
+        history.initialize(uploaded_file)
+        if st.session_state.get("reset_chat"):
+            history.reset(uploaded_file)
 
-                # Initialize the chat history
-                history.initialize(uploaded_file)
+        # Render the existing conversation
+        history.render()
 
-                # Reset the chat history if button clicked
-                if st.session_state["reset_chat"]:
-                    history.reset(uploaded_file)
+        # Native chat input for the next question
+        user_input = st.chat_input("Ask me anything about the document...")
+        if user_input:
+            history.append("user", user_input)
+            st.chat_message("user").write(user_input)
 
-                if is_ready:
-                    # Update the chat history and display the chat messages
-                    history.append("user", user_input)
+            # Chat history excludes the question we just appended
+            prior = history.to_langchain_messages()[:-1]
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    result = chatbot.conversational_chat(user_input, prior)
+                answer = result["answer"]
+                st.write(answer)
+                with st.expander("Sources"):
+                    for doc in result.get("context", []):
+                        st.markdown(
+                            f"- *{doc.metadata.get('source', 'document')}*: "
+                            f"{doc.page_content[:300]}..."
+                        )
+                st.caption(f"Query time: {result['query_time']:.2f} seconds")
 
-                    old_stdout = sys.stdout
-                    sys.stdout = captured_output = StringIO()
+            history.append("assistant", answer)
 
-                    output = st.session_state["chatbot"].conversational_chat(user_input)
-
-                    sys.stdout = old_stdout
-
-                    history.append("assistant", output)
-
-                    # Clean up the agent's thoughts to remove unwanted characters
-                    thoughts = captured_output.getvalue()
-                    cleaned_thoughts = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', thoughts)
-                    cleaned_thoughts = re.sub(r'\[1m>', '', cleaned_thoughts)
-
-                    # Display the agent's thoughts
-                    with st.expander("Display the agent's thoughts"):
-                        st.write(cleaned_thoughts)
-
-            sidebar.download_conversation(st.session_state["history"], uploaded_file.name)
-            history.generate_messages(response_container)
-            return True
+        sidebar.download_conversation(st.session_state["messages"], uploaded_file.name)
+        return True
 
 
     

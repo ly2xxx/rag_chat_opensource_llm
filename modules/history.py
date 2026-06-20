@@ -1,58 +1,45 @@
-import os
 import streamlit as st
-from streamlit_chat import message
+from langchain_core.messages import AIMessage, HumanMessage
+
 
 class ChatHistory:
-    
-    def __init__(self):
-        self.history = st.session_state.get("history", [])
-        st.session_state["history"] = self.history
+    """Conversation state backed by a single st.session_state['messages'] list.
 
-    def default_greeting(self):
-        return "Hey Robby ! 👋"
+    Each message is a dict: {"role": "user"|"assistant", "content": str}.
+    Rendering uses native st.chat_message; the chain consumes the list as
+    langchain_core BaseMessage objects via to_langchain_messages().
+    """
+
+    def __init__(self):
+        self.messages = st.session_state.setdefault("messages", [])
 
     def default_prompt(self, topic):
         return f"Hello ! Ask me anything about {topic} 🤗"
 
-    def initialize_user_history(self):
-        st.session_state["user"] = [self.default_greeting()]
-
-    def initialize_assistant_history(self, uploaded_file):
-        st.session_state["assistant"] = [self.default_prompt(uploaded_file.name)]
-
     def initialize(self, uploaded_file):
-        if "assistant" not in st.session_state:
-            self.initialize_assistant_history(uploaded_file)
-        if "user" not in st.session_state:
-            self.initialize_user_history()
+        if not st.session_state["messages"]:
+            self.append("assistant", self.default_prompt(uploaded_file.name))
 
     def reset(self, uploaded_file):
-        st.session_state["history"] = []
-        
-        self.initialize_user_history()
-        self.initialize_assistant_history(uploaded_file)
+        st.session_state["messages"] = []
+        self.messages = st.session_state["messages"]
+        self.append("assistant", self.default_prompt(uploaded_file.name))
         st.session_state["reset_chat"] = False
 
-    def append(self, mode, message):
-        st.session_state[mode].append(message)
+    def append(self, role, content):
+        st.session_state["messages"].append({"role": role, "content": content})
 
-    def generate_messages(self, container):
-        if st.session_state["assistant"]:
-            with container:
-                for i in range(len(st.session_state["assistant"])):
-                    message(
-                        st.session_state["user"][i],
-                        is_user=True,
-                        key=f"history_{i}_user",
-                        avatar_style="big-smile",
-                    )
-                    message(st.session_state["assistant"][i], key=str(i), avatar_style="thumbs")
+    def to_langchain_messages(self):
+        """Prior turns as BaseMessages for the history-aware retriever."""
+        converted = []
+        for msg in st.session_state["messages"]:
+            if msg["role"] == "user":
+                converted.append(HumanMessage(content=msg["content"]))
+            else:
+                converted.append(AIMessage(content=msg["content"]))
+        return converted
 
-    def load(self):
-        if os.path.exists(self.history_file):
-            with open(self.history_file, "r") as f:
-                self.history = f.read().splitlines()
-
-    def save(self):
-        with open(self.history_file, "w") as f:
-            f.write("\n".join(self.history))
+    def render(self, container=None):
+        target = container if container is not None else st
+        for msg in st.session_state["messages"]:
+            target.chat_message(msg["role"]).write(msg["content"])

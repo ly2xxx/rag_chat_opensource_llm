@@ -1,25 +1,17 @@
 import os
-import pickle
+import shutil
 import tempfile
-from langchain.document_loaders.csv_loader import CSVLoader
-from langchain.document_loaders import DataFrameLoader
-from langchain.vectorstores import FAISS
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain_community.embeddings import OllamaEmbeddings
-# from InstructorEmbedding import INSTRUCTOR
-# from langchain.embeddings import HuggingFaceInstructEmbeddings
+from langchain_community.document_loaders import CSVLoader
+from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_ollama import OllamaEmbeddings
 import zipfile
 import io
 import streamlit as st
-# from sentence_transformers import SentenceTransformer
 import pandas as pd
-from openpyxl import load_workbook
-from io import StringIO
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 class Embedder:
 
@@ -42,43 +34,40 @@ class Embedder:
         with zipfile.ZipFile(file1, 'r') as zip_ref:
             zip_ref.extractall(extracted_dir)
 
-        # Step 2: Iterate through .pkl files and read into a FAISS 'vectors' variable
+        embeddings = self.initializeEmbeddings()
+
+        # Step 2: Load every saved FAISS index (a folder containing index.faiss)
+        # and merge them into a single 'vectors' store. Stray raw files are
+        # embedded on the fly so legacy/manual archives still work.
         vectors = None
-        loaded_vectors = None
         for root, dirs, files in os.walk(extracted_dir):
-            for file in files:
-                if file.endswith('.pkl'):
-                    pkl_file_path = os.path.join(root, file)
-
-                    # Load vectors from the pickle file
-                    with open(pkl_file_path, 'rb') as f:
-                        loaded_vectors = pickle.load(f)
-                else:
+            loaded_vectors = None
+            if "index.faiss" in files:
+                loaded_vectors = FAISS.load_local(
+                    root, embeddings, allow_dangerous_deserialization=True
+                )
+                dirs[:] = []  # don't descend into an already-loaded index folder
+            else:
+                for file in files:
                     file_path = os.path.join(root, file)
-
-                    # Load vectors from the embedding
                     with open(file_path, 'rb') as f:
-                        f.seek(0)
-                        loaded_vectors = self.generateEmbeddingsFromFile(f.read(), self.get_file_extension(file))
+                        chunk = self.generateEmbeddingsFromFile(
+                            f.read(), self.get_file_extension(file)
+                        )
+                    loaded_vectors = chunk if loaded_vectors is None else (
+                        loaded_vectors.merge_from(chunk) or loaded_vectors
+                    )
 
-                # Assuming 'vectors' is a FAISS Index, merge the loaded vectors
-                if vectors is None:
-                    vectors = loaded_vectors
-                else:
-                    vectors.merge_from(loaded_vectors)
+            if loaded_vectors is None:
+                continue
+            if vectors is None:
+                vectors = loaded_vectors
+            else:
+                vectors.merge_from(loaded_vectors)
 
-        # Clean up: Remove the temporary directory and its contents
-        if os.path.exists(extracted_dir):
-            for file_or_dir in os.listdir(extracted_dir):
-                file_or_dir_path = os.path.join(extracted_dir, file_or_dir)
-                if os.path.isfile(file_or_dir_path):
-                    os.remove(file_or_dir_path)
-                elif os.path.isdir(file_or_dir_path):
-                    os.rmdir(file_or_dir_path)
-        
-        os.rmdir(extracted_dir)
+        # Clean up the temporary extraction directory
+        shutil.rmtree(extracted_dir, ignore_errors=True)
 
-        # Now 'vectors' contains all the loaded vectors from the .pkl files
         return vectors
     
     def get_file_extension(self, uploaded_file):
@@ -86,23 +75,27 @@ class Embedder:
             
             return file_extension
 
+    def index_path(self, original_filename):
+        """Folder where the FAISS index for this file/model is persisted."""
+        safe_model = self.MODEL.replace(':', '_')
+        return f"{self.PATH}/{safe_model}-{original_filename}"
+
     def storeDocEmbeds(self, file, original_filename):
         """
         Stores document embeddings using Langchain and FAISS
-        """ 
-        
+        """
+
         file_extension = self.get_file_extension(original_filename)
 
         vectors = None
         if file_extension == ".zip":
-            vectors = self.readVectorsFromZip(io.BytesIO(file), original_filename)
+            extract_dir = os.path.join(tempfile.gettempdir(), f"unzip-{original_filename}")
+            vectors = self.readVectorsFromZip(io.BytesIO(file), extract_dir)
         else:
             vectors = self.generateEmbeddingsFromFile(file, file_extension)
 
-        # Save the vectors to a pickle file
-        safe_model = self.MODEL.replace(':', '_')
-        with open(f"{self.PATH}/{safe_model}-{original_filename}.pkl", "wb") as f:
-            pickle.dump(vectors, f)
+        # Persist the FAISS index natively (writes index.faiss + index.pkl)
+        vectors.save_local(self.index_path(original_filename))
 
     def generateEmbeddingsFromFile(self, file, file_extension):
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
@@ -164,33 +157,30 @@ class Embedder:
         embeddings = self.initializeEmbeddings()
 
         vectors = FAISS.from_documents(data, embeddings)
-        # Error: 'Document' object has no attribute 'replace'
-        # vectors = FAISS.from_texts(data, embeddings)
         return vectors
 
     def initializeEmbeddings(self):
-        # modelPath = "all-MiniLM-L6-v2"
-        # embeddings = HuggingFaceEmbeddings(model_name=modelPath)
-        # Use embedding function to store them in vector db
+        # Dedicated embedding model (independent of the chat model).
         self.MODEL = st.session_state["model"]
-        # embeddings = OllamaEmbeddings(model=self.MODEL)
-        embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://localhost:11434")
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=base_url)
         return embeddings
 
 
     def getDocEmbeds(self, file, original_filename):
         """
-        Retrieves document embeddings
+        Retrieves document embeddings, building and persisting them on first use.
         """
-        safe_model = self.MODEL.replace(':', '_')
-        vector_file_name = f"{self.PATH}/{safe_model}-{original_filename}.pkl"
+        index_dir = self.index_path(original_filename)
 
-        if not os.path.isfile(vector_file_name):
+        if not os.path.isdir(index_dir):
             self.storeDocEmbeds(file, original_filename)
 
-        # Load the vectors from the pickle file
-        with open(vector_file_name, "rb") as f:
-            vectors = pickle.load(f)
-            st.session_state["vectordb"]=vector_file_name
-        
+        # Load the persisted FAISS index from disk
+        embeddings = self.initializeEmbeddings()
+        vectors = FAISS.load_local(
+            index_dir, embeddings, allow_dangerous_deserialization=True
+        )
+        st.session_state["vectordb"] = index_dir
+
         return vectors

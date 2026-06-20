@@ -1,20 +1,14 @@
-import streamlit as st
-from langchain_community.chat_models import ChatOllama
-# from langchain_community.chat_models import ChatOpenAI
-from langchain.chains import ConversationalRetrievalChain
-# from langchain.chains import RetrievalQA
-from langchain.prompts.prompt import PromptTemplate
+import os
 import time
-# from langchain.callbacks import get_openai_callback
-# from ctransformers import AutoModelForCausalLM
-# from transformers import AutoTokenizer, BitsAndBytesConfig
-# from langchain.llms import HuggingFacePipeline
-# import torch
-# import transformers
+import streamlit as st
+from langchain_ollama import ChatOllama
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_classic.chains import (
+    create_history_aware_retriever,
+    create_retrieval_chain,
+)
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
-#fix Error: module 'langchain' has no attribute 'verbose'
-import langchain
-langchain.verbose = False
 
 class Chatbot:
 
@@ -23,109 +17,73 @@ class Chatbot:
         self.temperature = temperature
         self.vectors = vectors
 
-    # qa_template = """
-    #     You are a helpful AI assistant named Robby. The user gives you a file its content is represented by the following pieces of context, use them to answer the question at the end.
-    #     If you don't know the answer, just say you don't know. Do NOT try to make up an answer.
-    #     If the question is not related to the context, politely respond that you are tuned to only answer questions that are related to the context.
-    #     Use as much detail as possible when responding.
+    # Reformulates a follow-up question into a standalone one using chat history,
+    # so the retriever gets a self-contained query.
+    contextualize_q_system_prompt = (
+        "Given a chat history and the latest user question which might reference "
+        "context in the chat history, formulate a standalone question which can be "
+        "understood without the chat history. Do NOT answer the question, just "
+        "reformulate it if needed and otherwise return it as is."
+    )
 
-    #     context: {context}
-    #     =========
-    #     question: {question}
-    #     ======
-    #     """
-    
-    qa_template = """
-        You are a helpful AI assistant named Robby. The user gives you a file its content is represented by the following pieces of context, use them to answer the question at the end.
-        If you don't know the answer, just say you don't know. Do NOT try to make up an answer.
-        If the question is not related to the context, search in your own knowledge base. But if you do find the answer in your own knowledge base, politely tell the user the provided context is not relevant and you have found the answer from somewhere else. And be as specific about the source of the answer as possible.
-        Use as much detail as possible when responding.
+    qa_system_prompt = (
+        "You are a helpful AI assistant named Robby. The user gives you a file whose "
+        "content is represented by the following pieces of context, use them to answer "
+        "the question.\n"
+        "If you don't know the answer, just say you don't know. Do NOT try to make up "
+        "an answer.\n"
+        "If the question is not related to the context, search in your own knowledge "
+        "base. But if you do find the answer in your own knowledge base, politely tell "
+        "the user the provided context is not relevant and you have found the answer "
+        "from somewhere else. And be as specific about the source of the answer as "
+        "possible.\n"
+        "Use as much detail as possible when responding.\n\n"
+        "context: {context}"
+    )
 
-        context: {context}
-        =========
-        question: {question}
-        ======
+    def conversational_chat(self, query, chat_history=None):
         """
+        Run a single conversational RAG turn with a history-aware retriever.
 
-    QA_PROMPT = PromptTemplate(template=qa_template, input_variables=["context","question" ])
-
-    def conversational_chat(self, query):
+        :param query: the user's question
+        :param chat_history: list of langchain_core BaseMessage from prior turns
+        :return: dict with "answer", "context" (source docs) and "query_time"
+        """
         start_time = time.time()
-        """
-        Start a conversational chat with a model via Langchain
-        """
+        chat_history = chat_history or []
+
         llm = self.initializeLLM()
-
-        retriever = self.vectors.as_retriever(search_type="similarity", search_kwargs={"k":3})
-
-        chain = ConversationalRetrievalChain.from_llm(llm=llm,
-            retriever=retriever, verbose=True, return_source_documents=True, max_tokens_limit=4097, combine_docs_chain_kwargs={'prompt': self.QA_PROMPT})
-        
-        chain_input = {"question": query, "chat_history": st.session_state["history"]}
-        result = chain(chain_input)
-        st.session_state["history"].append((query, result["answer"]))
-
-        end_time = time.time()
-        execution_time = end_time - start_time
-        
-        return (
-            result["answer"]
-            + "\n---------------------------------------\n"
-            + f"Query time: {execution_time:.4f} seconds"
-            + "\n---------------------------------------\n"
-            # + "\n".join(map(str, result['source_documents']))
+        retriever = self.vectors.as_retriever(
+            search_type="similarity", search_kwargs={"k": 3}
         )
 
-        #https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed
-        # qa_chain = RetrievalQA.from_chain_type(
-        #     llm,
-        #     retriever=retriever,
-        #     chain_type="map_reduce",
-        #     return_source_documents=True
-        #     # chain_type_kwargs={"prompt": self.QA_PROMPT}
-        # )
+        contextualize_q_prompt = ChatPromptTemplate.from_messages([
+            ("system", self.contextualize_q_system_prompt),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ])
+        history_aware_retriever = create_history_aware_retriever(
+            llm, retriever, contextualize_q_prompt
+        )
 
-        # result = qa_chain({"query": query})
+        qa_prompt = ChatPromptTemplate.from_messages([
+            ("system", self.qa_system_prompt),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ])
+        question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-        # st.session_state["history"].append((query, result["result"]))
-        # st.session_state["history"].append((query, result["source_documents"][0]))
-        
-        # end_time = time.time()
-        # execution_time = end_time - start_time
+        rag_chain = create_retrieval_chain(
+            history_aware_retriever, question_answer_chain
+        )
 
-        # return result["result"]+"\n------\n"+f"Query time: {execution_time:.4f} seconds"
+        result = rag_chain.invoke({"input": query, "chat_history": chat_history})
+
+        result["query_time"] = time.time() - start_time
+        return result
 
     def initializeLLM(self):
-        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434", temperature=self.temperature)
-        # llm = ChatOpenAI(model=self.model_name, base_url="http://localhost:11434/v1", temperature=self.temperature)
-        # model = AutoModelForCausalLM.from_pretrained(
-        #     "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",
-        #     model_file="mistral-7b-instruct-v0.1.Q4_K_M.gguf",
-        #     model_type="mistral", 
-        #     gpu_layers=0, hf=True,
-        #     max_new_tokens = 1000,
-        #     context_length = 6000
-        # )
-        # tokenizer = AutoTokenizer.from_pretrained(
-        #     "mistralai/Mistral-7B-v0.1", 
-        #     use_fast=True
-        # )
-
-        # # Create a pipeline
-        # pipeline = transformers.pipeline(model=model, tokenizer=tokenizer, max_new_tokens=2048, task='text-generation')
-
-        # llm = HuggingFacePipeline(
-        #     pipeline=pipeline,
-        #     )
-
-        return llm
-
-
-# def count_tokens_chain(chain, query):
-#     with get_openai_callback() as cb:
-#         result = chain.run(query)
-#         st.write(f'###### Tokens used in this conversation : {cb.total_tokens} tokens')
-#     return result 
-
-    
-    
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        return ChatOllama(
+            model=self.model_name, base_url=base_url, temperature=self.temperature
+        )

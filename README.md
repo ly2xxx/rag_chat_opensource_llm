@@ -9,9 +9,10 @@ Experimented with Retrieval Augmented Generation based on given data
 Follow these steps to set up and run the service locally :
 
 ### Prerequisites
-- Python 3.9 or higher
+- Python 3.11 or higher
 - Git
-- Ollama setup "ollama run deepseek-v4-pro:cloud" (see https://dev.to/0xkoji/how-to-run-large-language-models-locally-on-a-windows-machine-using-wsl-and-ollama-55fd)
+- [uv](https://docs.astral.sh/uv/) package manager
+- Ollama with a chat model (e.g. `ollama run deepseek-v4-pro:cloud`) and the embedding model `ollama pull nomic-embed-text` (see https://dev.to/0xkoji/how-to-run-large-language-models-locally-on-a-windows-machine-using-wsl-and-ollama-55fd)
 
 ### Installation
 Clone the repository :
@@ -34,13 +35,6 @@ Activate the virtual environment :
 .\.venv\Scripts\activate
 ```
 
-Setup gpt-2 tokenizer manually for langchain ConversationalRetrievalChain :
-Copy 
-`models\models--gpt2`
-to
-`C:\Users\[windows-username]\.cache\huggingface\hub\models--gpt2`
-![gpt2 manual copy screenshot](Gallery/menu/gpt-2-setup.png?raw=true "gpt2 setup")
-
 Launch the chat service locally :
 ```bash
 streamlit run streamlit_app.py
@@ -50,5 +44,11 @@ streamlit run streamlit_app.py
 
 ![website demo screenshot](Gallery/menu/Mistral-GPU-Chat-web-2024-01-28-12_57_37.png?raw=true "website demo")
 
+### Tech stack
+- **LangChain 1.x** with a history-aware LCEL retrieval chain (`create_history_aware_retriever` + `create_retrieval_chain` + `create_stuff_documents_chain`)
+- **Ollama** via `langchain-ollama` for both chat (`ChatOllama`) and embeddings (`OllamaEmbeddings`, `nomic-embed-text`)
+- **FAISS** vector store, persisted natively with `save_local` / `load_local`
+- **Streamlit** native multipage (`st.navigation`) and native chat (`st.chat_message` / `st.chat_input`)
+
 ### Other resources
-auto-upgrade imports - https://python.langchain.com/v0.2/docs/versions/v0_2/
+- LangChain v1 migration guide - https://docs.langchain.com/oss/python/migrate/langchain-v1
