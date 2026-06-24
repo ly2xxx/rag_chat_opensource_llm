@@ -7,7 +7,7 @@ dependencies = [
     "bs4==0.0.1",
     "faiss-cpu==1.9.0",
     "flask==2.0.2",
-    "huggingface-hub<0.23.0",
+    "huggingface-hub<1.21.0",
     "langchain==0.2.10",
     "langchain-community==0.2.10",
     "openpyxl==3.1.5",
